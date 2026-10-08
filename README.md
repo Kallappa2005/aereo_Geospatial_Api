@@ -440,7 +440,7 @@ A key learning was understanding why area and distance should not be calculated 
 
 ---
 
-## Current Scope
+# 11 Current Scope
 
 - KML file processing (Because Requirements asked either .kml or Shapefile)
 - Feature extraction
@@ -449,7 +449,7 @@ A key learning was understanding why area and distance should not be calculated 
 - LineString length calculation
 - REST APIs for file information and measurements
 
-# 11. Future Scope
+# 12. Future Scope
 
 - Add Shapefile ZIP support for processing `.shp`, `.shx`, `.dbf`, and `.prj` files.
 - Add a feature details API to expose geometry type, CRS, properties, and feature information.
@@ -459,7 +459,7 @@ A key learning was understanding why area and distance should not be calculated 
 
 ---
 
-# 12. Submission
+# 13. Submission
 
 This project was developed as part of the Aereo Software Development Engineer Intern assignment.
 
