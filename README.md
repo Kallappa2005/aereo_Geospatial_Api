@@ -1,8 +1,8 @@
 # Aereo Geospatial File Measurement API
 
-A backend API built for the Aereo Software Development Engineer Intern assignment.
+A backend API developed for the Aereo Software Development Engineer Intern assignment.
 
-The application accepts KML files, extracts their geospatial features, handles Coordinate Reference Systems (CRS), and calculates measurements such as polygon area and LineString length.
+The application accepts KML files, extracts geospatial features, handles Coordinate Reference Systems (CRS), and calculates measurements such as polygon area and LineString length.
 
 ## Tech Stack
 
@@ -14,7 +14,7 @@ The application accepts KML files, extracts their geospatial features, handles C
 - SQLAlchemy
 - SQLite
 - Pytest
-- Uvicorn
+- Docker
 
 ---
 
@@ -22,25 +22,31 @@ The application accepts KML files, extracts their geospatial features, handles C
 
 ## Prerequisites
 
-Make sure the following are installed:
+For local setup:
 
 - Python 3.11+
 - uv
 
-## Clone the repository
+For Docker setup:
+
+- Docker Desktop
+
+## Clone the Repository
 
 ```bash
-git clone <YOUR_GITHUB_REPOSITORY_URL>
+git clone <YOUR_PUBLIC_GITHUB_REPOSITORY_URL>
 cd aereoGeospetialApi
 ```
 
-## Install dependencies
+## Run Locally
+
+Install dependencies:
 
 ```bash
 uv sync
 ```
 
-## Run the application
+Start the application:
 
 ```bash
 uv run python -m uvicorn app.main:app --reload
@@ -52,10 +58,36 @@ The API will be available at:
 http://127.0.0.1:8000
 ```
 
-Interactive Swagger API documentation:
+Swagger API documentation:
 
 ```text
 http://127.0.0.1:8000/docs
+```
+
+## Run Using Docker
+
+Build the Docker image:
+
+```bash
+docker build -t aereo-geospatial-api .
+```
+
+Run the container:
+
+```bash
+docker run -p 8000:8000 aereo-geospatial-api
+```
+
+The API will then be available at:
+
+```text
+http://localhost:8000
+```
+
+Swagger documentation:
+
+```text
+http://localhost:8000/docs
 ```
 
 ---
@@ -68,16 +100,16 @@ Uploads and processes a KML file.
 
 ### Request
 
-Use `multipart/form-data` with a file field named `file`.
+The API accepts a `multipart/form-data` request with a file field named `file`.
 
-Example using curl:
+Example:
 
 ```bash
 curl -X POST "http://127.0.0.1:8000/api/files/" \
   -F "file=@sample_data/sample.kml"
 ```
 
-### Successful Response
+### Response
 
 ```json
 {
@@ -90,13 +122,11 @@ curl -X POST "http://127.0.0.1:8000/api/files/" \
 }
 ```
 
-The uploaded file is processed immediately and its measurements are stored in the database.
-
 ---
 
 ## GET /api/files/{file_id}/
 
-Returns information about a previously uploaded file.
+Returns information about an uploaded file.
 
 ### Example
 
@@ -116,19 +146,11 @@ GET /api/files/1/
 }
 ```
 
-### File Not Found
-
-```json
-{
-    "detail": "File not found."
-}
-```
-
 ---
 
 ## GET /api/files/{file_id}/measurements/
 
-Returns the measurements calculated for the features of a file.
+Returns measurements calculated for the features of an uploaded file.
 
 ### Example
 
@@ -161,79 +183,24 @@ GET /api/files/1/measurements/
 }
 ```
 
-Point features do not have a measurement and are therefore not included in the measurements list.
+Point features do not have a measurement.
 
 ---
 
-# 3. Validation and Error Handling
-
-The API validates uploaded files before processing them.
-
-### Unsupported File Type
-
-Only KML files are currently supported.
-
-```json
-{
-    "detail": "Only KML files are supported."
-}
-```
-
-### Invalid KML
-
-If the uploaded file cannot be parsed as valid KML/XML:
-
-```json
-{
-    "detail": "Unable to read the KML file."
-}
-```
-
-### Empty KML
-
-If the KML is valid but contains no features:
-
-```json
-{
-    "detail": "The KML file contains no features."
-}
-```
-
-### File Not Found
-
-If the requested file ID does not exist:
-
-```json
-{
-    "detail": "File not found."
-}
-```
-
----
-
-# 4. Architecture
-
-## Application Structure
+# 3. Architecture
 
 ```text
 aereoGeospetialApi/
 │
 ├── app/
-│   ├── __init__.py
 │   ├── main.py
-│   │
 │   ├── routes/
-│   │   ├── __init__.py
 │   │   └── files.py
-│   │
 │   ├── services/
-│   │   ├── __init__.py
 │   │   ├── kml_processor.py
 │   │   ├── crs_handler.py
 │   │   └── measurement.py
-│   │
 │   └── database/
-│       ├── __init__.py
 │       ├── database.py
 │       └── models.py
 │
@@ -244,328 +211,184 @@ aereoGeospetialApi/
 │   └── sample.kml
 │
 ├── uploads/
-├── aereo.db
+├── Dockerfile
+├── .dockerignore
+├── .gitignore
 ├── pyproject.toml
 ├── uv.lock
-├── README.md
-└── .gitignore
+└── README.md
 ```
 
-### Responsibilities
+### Main Components
 
-#### `main.py`
+**`routes/files.py`**
 
-Creates the FastAPI application, initializes the database tables, and registers the API routes.
+Handles file upload, validation, database operations, and API responses.
 
-#### `routes/files.py`
+**`services/kml_processor.py`**
 
-Handles:
+Reads KML files using GeoPandas and extracts features, geometry types, CRS, properties, and measurement information.
 
-- File upload
-- File validation
-- Database operations
-- Processing errors
-- API responses
+**`services/crs_handler.py`**
 
-#### `services/kml_processor.py`
+Transforms geographic coordinates into a suitable projected CRS before measurement calculations.
 
-Handles KML processing using GeoPandas.
-
-It extracts:
-
-- Feature index
-- Geometry type
-- Geometry
-- CRS
-- Properties/attributes
-- Measurement information
-
-#### `services/crs_handler.py`
-
-Handles coordinate reference system transformations.
-
-It transforms geographic coordinates into a suitable projected CRS before calculating metric measurements.
-
-#### `services/measurement.py`
+**`services/measurement.py`**
 
 Calculates measurements based on geometry type.
 
-- Polygon → Area
-- LineString → Length
-- Point → No measurement
+**`database/`**
 
-#### `database/database.py`
+Contains the SQLAlchemy database configuration and models.
 
-Creates the SQLAlchemy database engine and database session.
+**`tests/test_files.py`**
 
-#### `database/models.py`
-
-Defines the database models used to store uploaded file information and measurements.
-
-#### `tests/test_files.py`
-
-Contains the automated Pytest tests for the main application flows.
+Contains the automated API tests using Pytest.
 
 ---
 
-# 5. File Processing Flow
-
-The file processing flow is:
+# 4. File Processing Flow
 
 ```text
-Client
-  │
-  │ POST /api/files/
-  ▼
-FastAPI Route
-  │
-  ├── Validate filename
-  │
-  ├── Save uploaded KML
-  │
-  ▼
-KML Processor
-  │
-  ├── Validate KML/XML
-  ├── Check for features
-  ├── Read using GeoPandas
-  ├── Extract geometry
-  ├── Extract properties
-  └── Identify CRS
-  │
-  ▼
-CRS Handler
-  │
-  └── Transform geographic CRS
-      to projected CRS when required
-  │
-  ▼
-Measurement Service
-  │
-  ├── Polygon → Area
-  ├── LineString → Length
-  └── Point → No measurement
-  │
-  ▼
-SQLite Database
-  │
-  ├── File information
-  └── Measurements
+KML Upload
+    ↓
+Validate File
+    ↓
+Save File
+    ↓
+Read KML using GeoPandas
+    ↓
+Extract Features
+    ↓
+Identify Geometry and CRS
+    ↓
+Transform CRS if Required
+    ↓
+Calculate Measurements
+    ↓
+Store File Information and Measurements
+    ↓
+Return API Response
 ```
+
+The processor extracts the feature index, geometry type, geometry, CRS, and properties/attributes from the KML data.
 
 ---
 
-# 6. Measurement Calculation Flow
+# 5. Measurement Calculation
 
-The application determines the measurement based on the geometry type.
+Measurements depend on the geometry type.
 
-## Polygon
-
-For polygon geometries:
+### Polygon
 
 ```text
 Polygon
    ↓
-Projected geometry
+Projected Geometry
    ↓
-geometry.area
+Area
    ↓
-Area in square meters
+Square Meters
 ```
 
-## LineString
-
-For LineString geometries:
+### LineString
 
 ```text
 LineString
    ↓
-Projected geometry
+Projected Geometry
    ↓
-geometry.length
+Length
    ↓
-Length in meters
+Meters
 ```
 
-## Point
+### Point
 
-Points do not have an area or length measurement, so the application returns no measurement for them.
+Points do not have an area or length measurement, so no measurement is stored for them.
 
-Unsupported geometry types are also handled without crashing the complete file-processing operation.
+Unsupported measurement geometries are handled without crashing the complete file-processing operation.
 
 ---
 
-# 7. CRS Handling
+# 6. CRS Handling
 
-KML coordinates are commonly represented using geographic coordinates such as latitude and longitude.
+KML coordinates are commonly represented using latitude and longitude.
 
-Directly calculating:
+Calculating area or distance directly using geographic coordinates can produce incorrect results because latitude and longitude are measured in degrees rather than meters.
 
-```text
-geometry.area
-geometry.length
-```
-
-on latitude/longitude coordinates can produce incorrect measurements because degrees are angular units rather than metric units.
-
-Therefore, the application follows this approach:
+The application therefore uses the following approach:
 
 ```text
 Input KML
-   ↓
+    ↓
 Check CRS
-   ↓
-Is CRS geographic?
-   │
-   ├── Yes
-   │     ↓
-   │   Estimate suitable UTM CRS
-   │     ↓
-   │   Transform geometry
-   │     ↓
-   │   Calculate measurement
-   │
-   └── No
-         ↓
-      Use existing projected CRS
-         ↓
-      Calculate measurement
+    ↓
+Geographic CRS?
+    │
+    ├── Yes → Estimate suitable UTM CRS
+    │           ↓
+    │       Transform geometry
+    │
+    └── No  → Use existing projected CRS
+                ↓
+          Calculate measurement
 ```
 
-The application uses GeoPandas' `estimate_utm_crs()` to select an appropriate UTM projection based on the geographic location of the input data.
+GeoPandas `estimate_utm_crs()` is used to select a suitable UTM projection based on the location of the input data.
 
-This allows measurements to be calculated in meters and square meters rather than degrees.
+This allows measurements to be calculated in meters and square meters.
 
 ---
 
-# 8. Database Design
-
-SQLite is used as the database because the assignment is a lightweight backend application and does not require a spatial database for the current implementation.
-
-## Files Table
-
-Stores information about uploaded files:
-
-```text
-files
-├── id
-├── filename
-├── file_path
-├── file_type
-├── status
-├── feature_count
-└── crs
-```
-
-## Measurements Table
-
-Stores calculated measurements:
-
-```text
-measurements
-├── id
-├── file_id
-├── feature_index
-├── geometry_type
-├── measurement_type
-├── value
-└── unit
-```
-
-A spatial database such as PostgreSQL with PostGIS could be considered for a larger production system.
-
----
-
-# 9. Design Decisions
+# 7. Design Decisions
 
 ## FastAPI
 
-FastAPI was selected because it provides:
+FastAPI was chosen instead of Django REST Framework because the assignment requires a relatively small REST API and FastAPI provides:
 
-- Simple REST API development
+- Simple API development
 - Automatic OpenAPI documentation
 - Swagger UI
-- Type hints
-- File upload support
-- Good performance for API applications
-
-Django REST Framework was considered as an alternative, but FastAPI was chosen because the assignment focuses on a relatively small backend API.
-
----
+- Easy file upload handling
 
 ## GeoPandas
 
-GeoPandas was selected because it provides convenient support for reading and processing geospatial files.
+GeoPandas was selected for reading and processing geospatial data and for its integration with Shapely and PyProj.
 
-It also integrates well with:
+## CRS Strategy
 
-- Shapely
-- PyProj
-- Coordinate transformations
-
----
-
-## Shapely
-
-Shapely is used for geometry-specific operations such as:
-
-- Polygon area
-- LineString length
-- Geometry type identification
-
----
-
-## UTM Projection
-
-Instead of manually selecting a fixed projected CRS, the application uses `estimate_utm_crs()`.
-
-This provides a more general approach because the appropriate UTM zone depends on the geographic location of the input data.
-
----
+A dynamic UTM CRS is estimated using `estimate_utm_crs()` instead of using one fixed projected CRS. This makes the approach more suitable for data from different geographic locations.
 
 ## SQLite
 
-SQLite was selected because:
+SQLite was chosen because the assignment is a lightweight backend application and does not require a spatial database.
 
-- The assignment does not require a spatial database.
-- The application is intended to run locally.
-- It keeps the setup simple.
-- SQLAlchemy allows the database layer to be changed later if required.
-
-For a larger production geospatial system, PostgreSQL with PostGIS would be a stronger alternative.
-
----
+For a larger production system, PostgreSQL with PostGIS would be a suitable alternative.
 
 ## SQLAlchemy
 
-SQLAlchemy provides an ORM layer between the FastAPI application and the database.
+SQLAlchemy provides the database abstraction layer and makes it easier to migrate from SQLite to another relational database in the future.
 
-It also makes it easier to migrate to another relational database in the future.
+## Docker
+
+The application was Dockerized so that the application environment and dependencies can be packaged consistently and run without manually configuring the Python environment.
 
 ---
 
-# 10. Testing
+# 8. Testing
 
-The project includes two representative Pytest tests.
+Two representative Pytest tests are included.
 
-## Test 1 — Successful KML Processing
+### Test 1 — Successful KML Processing
 
-Tests that a valid KML file:
+Verifies that a valid KML file is uploaded and processed successfully with the expected feature count, CRS, and completion status.
 
-- Is uploaded successfully
-- Contains the expected number of features
-- Has the expected CRS
-- Completes processing successfully
+### Test 2 — Empty KML Validation
 
-## Test 2 — Empty KML Validation
+Verifies that an empty KML file is rejected with HTTP 400 and the expected error message.
 
-Tests that an empty KML file:
-
-- Is rejected
-- Returns HTTP 400
-- Returns the expected validation message
-
-Run the tests using:
+Run the tests:
 
 ```bash
 uv run pytest
@@ -579,17 +402,17 @@ Expected result:
 
 ---
 
-# 11. Current Scope
+# 9. Current Scope
 
-The current implementation focuses on **KML processing**.
+The current implementation supports KML files.
 
-Supported geometry types include:
+Supported geometry types:
 
 - Point
 - LineString
 - Polygon
 
-Measurements currently supported:
+Supported measurements:
 
 - Polygon → Area
 - LineString → Length
@@ -599,52 +422,46 @@ Shapefile and ZIP-based Shapefile processing are not currently implemented.
 
 ---
 
-# 12. Learning
+# 10. Learning
 
-Through this project, I worked with:
+This project helped me gain practical experience with:
 
 - FastAPI REST API development
-- File upload handling
-- GeoPandas for geospatial data processing
-- Shapely geometry operations
-- CRS and coordinate transformations
-- UTM projection selection
-- SQLAlchemy ORM
-- SQLite database integration
-- API validation and error handling
+- Geospatial data processing using GeoPandas
+- Geometry operations using Shapely
+- CRS transformation and UTM projections
+- SQLAlchemy and SQLite
+- File validation and error handling
 - Pytest API testing
+- Dockerizing a Python application
 - Structuring a backend application into routes, services, and database layers
 
-The project also helped me understand why geospatial measurements cannot simply be calculated directly from latitude/longitude coordinates.
+A key learning was understanding why area and distance should not be calculated directly using latitude/longitude coordinates.
 
 ---
 
-# 13. Future Scope
+# 11. Future Scope
 
-The following improvements could be added in future versions:
+Possible future improvements include:
 
-- Support for Shapefile uploads
-- Support for ZIP archives containing Shapefile datasets
-- Store complete feature geometry and properties in the database
-- Add Pydantic response schemas
-- Add stronger database relationships and transaction handling
-- Add authentication and authorization
-- Support asynchronous/background processing for large files
-- Add file size limits and stronger upload security
-- Use PostgreSQL with PostGIS for production-scale geospatial data
-- Add more comprehensive automated tests
-- Add Docker-based deployment
-- Add cloud deployment and object storage for uploaded files
-- Support additional geospatial formats such as GeoJSON
+- Support for Shapefile and ZIP uploads
+- Store complete feature geometry and properties
+- PostgreSQL/PostGIS for production-scale geospatial data
+- Background processing for large files
+- Stronger file upload validation and size limits
+- Authentication and authorization
+- More comprehensive automated tests
+- Cloud deployment and object storage
+- Support for additional geospatial formats such as GeoJSON
 
 ---
 
-# 14. Submission
+# 12. Submission
 
-This project is developed as part of the Aereo Software Development Engineer Intern assignment.
+This project was developed as part of the Aereo Software Development Engineer Intern assignment.
 
-## GitHub Repository
+GitHub Repository:
 
 ```text
-<YOUR_PUBLIC_GITHUB_REPOSITORY_URL>
+https://github.com/Kallappa2005/aereo_Geospatial_Api
 ```

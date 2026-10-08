@@ -12,5 +12,4 @@ __pycache__/
 *.db
 
 # Uploaded files
-uploads/*
 !uploads/.gitkeep
