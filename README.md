@@ -440,19 +440,22 @@ A key learning was understanding why area and distance should not be calculated 
 
 ---
 
+## Current Scope
+
+- KML file processing (Because Requirements asked either .kml or Shapefile)
+- Feature extraction
+- CRS-aware measurements
+- Polygon area calculation
+- LineString length calculation
+- REST APIs for file information and measurements
+
 # 11. Future Scope
 
-Possible future improvements include:
-
-- Support for Shapefile and ZIP uploads
-- Store complete feature geometry and properties
-- PostgreSQL/PostGIS for production-scale geospatial data
-- Background processing for large files
-- Stronger file upload validation and size limits
-- Authentication and authorization
-- More comprehensive automated tests
-- Cloud deployment and object storage
-- Support for additional geospatial formats such as GeoJSON
+- Add Shapefile ZIP support for processing `.shp`, `.shx`, `.dbf`, and `.prj` files.
+- Add a feature details API to expose geometry type, CRS, properties, and feature information.
+- Add geometry-type filtering for measurement results.
+- Extend measurements to support MultiPolygon and MultiLineString geometries.
+- Add file-level statistics and measurement summaries such as geometry counts, total area, and total length.
 
 ---
 
