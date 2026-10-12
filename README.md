@@ -34,7 +34,7 @@ For Docker setup:
 ## Clone the Repository
 
 ```bash
-git clone <YOUR_PUBLIC_GITHUB_REPOSITORY_URL>
+git clone https://github.com/Kallappa2005/aereo_Geospatial_Api
 cd aereoGeospetialApi
 ```
 
